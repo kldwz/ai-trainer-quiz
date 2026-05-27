@@ -8,3 +8,5 @@ logs/
 *_result.json
 official_answers_for_review.json
 answer_verification_*.md
+.vercel
+.env*

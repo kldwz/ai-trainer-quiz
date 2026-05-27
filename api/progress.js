@@ -109,18 +109,20 @@ module.exports = async function handler(req, res) {
         idx,
       }));
 
-      // batch upsert
+      // phase 1: deletes (favorites and tags need full replace)
+      await Promise.all([
+        supabase.from('favorites').delete().eq('user_id', USER_ID),
+        supabase.from('tags').delete().eq('user_id', USER_ID),
+      ]);
+
+      // phase 2: upserts
       const ops = [];
       if (answerRows.length > 0) {
         ops.push(supabase.from('answers').upsert(answerRows, { onConflict: 'user_id,question_id' }));
       }
-      // delete removed favorites, then upsert current
-      ops.push(supabase.from('favorites').delete().eq('user_id', USER_ID));
       if (favRows.length > 0) {
         ops.push(supabase.from('favorites').upsert(favRows, { onConflict: 'user_id,question_id' }));
       }
-      // delete removed tags, then upsert current
-      ops.push(supabase.from('tags').delete().eq('user_id', USER_ID));
       if (tagRows.length > 0) {
         ops.push(supabase.from('tags').upsert(tagRows, { onConflict: 'user_id,question_id' }));
       }
